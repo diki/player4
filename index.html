@@ -1,0 +1,261 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+
+    <script type="text/javascript" src="js/lib/jquery.js"></script>
+    <script type="text/javascript" src="js/lib/underscore.js"></script>
+    <script type="text/javascript" src="js/soundmanager2.js"></script>
+    <script type="text/javascript" src="canva.js"></script>
+    
+    
+    <script type="text/javascript">
+        soundManager.url = './swf';
+        soundManager.useHighPerformance = true;
+        soundManager.useHTML5Audio = true;
+        soundManager.debugMode = true;
+        soundManager.flashVersion = 9;
+        soundManager.allowScriptAccess = 'always'
+    </script>
+    
+    <style type="text/css">
+    
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        body {
+            font-family: "lucida sans", verdana, arial, helvetica, sans-serif;
+            font-size: 75%;
+            background-image: url(images/conbg.png);
+        }
+        h1 {
+            font-size: 1.4em;
+            padding: 10px 10px 0;
+        }
+        p {
+            padding: 0 10px 1em;
+        }
+        html, body {
+            height: 100%;
+        }
+        #container{
+            width: 80%;
+            min-height: 100%;
+            margin: 0 auto;
+            z-index:0;
+        }
+        
+        #stage {
+            width: 100%;
+            min-height: 90%;
+            height: 90%;
+        }
+        
+        #myCanvas {
+        }
+        
+        #canvas {
+
+        }
+        
+        #real-stage {
+            border: 1px solid yellow;
+            position: absolute;
+            height: 820px;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+        }
+        
+        div.station{
+            border: 1px solid yellow;
+            position:absolute;
+        }
+        
+        #canvas {
+        
+        }
+    </style>
+</head>
+<body>
+    <div id="header" style="position: absolute; top: 0; height: 80px; color: white;">
+      <h1>listen</h1>
+    </div>
+    <canvas id="c"></canvas>
+    <center id="cc" style="position: absolute; top: 90px;">
+        <div id="canvasContainer" style="position: relative;">
+            <canvas id="canvas"></canvas>
+
+        </div>
+    </center>
+    </div>
+    
+<!--    <script type="text/javascript" src="js/lib/underscore.js"></script>
+    <script type="text/javascript" src="js/lib/backbone-min.js"></script>
+
+    
+    <script type="text/javascript" src="js/models/PlayingPointModel.js"></script>    
+    <script type="text/javascript" src="js/collections/PlayerPointsCollection.js"></script>    
+    <script type="text/javascript" src="js/views/CanvasView.js"></script>    
+    
+
+    <script type="text/javascript" src="js/app/app.js"></script>
+    <script type="text/javascript" src="app.js"></script>-->
+    <script type="text/javascript">
+        // requestAnimFrame shim
+        window.requestAnimFrame = (function()
+        {
+           return  window.requestAnimationFrame       || 
+                   window.webkitRequestAnimationFrame || 
+                   window.mozRequestAnimationFrame    || 
+                   window.oRequestAnimationFrame      || 
+                   window.msRequestAnimationFrame     || 
+                   function(callback)
+                   {
+                       window.setTimeout(callback);
+                   };
+        })();
+
+        // remove frame margin and scrollbars when maxing out size of canvas
+        document.body.style.margin = "0px";
+        document.body.style.overflow = "hidden";
+
+        // get dimensions of window and resize the canvas to fit
+        var width = window.innerWidth,
+            height = window.innerHeight,
+            canvas = document.getElementById("c"),
+            // mousex = width/2, mousey = height/2;
+            mousex = width/8, mousey = height/8;
+        canvas.width = width;
+        canvas.height = height;
+
+        // get 2d graphics context and set global alpha
+        var G=canvas.getContext("2d");
+        G.globalAlpha=0.25;
+        
+
+        // setup aliases
+        var Rnd = Math.random,
+            Sin = Math.sin,
+            Floor = Math.floor;
+
+        // constants and storage for objects that represent star positions
+        var warpZ = 12,
+            units = 500,
+            stars = [],
+            cycle = 0,
+            Z = 0.025 + (1/25 * 2),
+            //Z= 55+100*1/Z;
+            starWidth = 2;
+            //extraUnits = 0;
+        // mouse events
+        function addCanvasEventListener(name, fn)
+        {
+           canvas.addEventListener(name, fn, false);
+        }
+        // addCanvasEventListener("mousemove", function(e) {
+        //    mousex = e.clientX;
+        //    mousey = e.clientY;
+        // });
+
+        function wheel (e) {
+           var delta = 0;
+           if (e.detail)
+           {
+              delta = -e.detail / 3;
+           }
+           else
+           {
+              delta = e.wheelDelta / 120;
+           }
+           var doff = (delta/25);
+           if (delta > 0 && Z+doff <= 0.5 || delta < 0 && Z+doff >= 0.01)
+           {
+              Z += (delta/25);
+              //console.log(delta +" " +Z);
+           }
+        }
+        addCanvasEventListener("DOMMouseScroll", wheel);
+        addCanvasEventListener("mousewheel", wheel);
+
+        // function to reset a star object
+        function resetstar(a)
+        {
+           a.x = (Rnd() * width - (width * 0.5)) * warpZ;
+           a.y = (Rnd() * height - (height * 0.5)) * warpZ;
+           a.z = warpZ;
+           a.px = 0;
+           a.py = 0;
+        }
+
+        // initial star setup
+        for (var i=0, n; i<units; i++)
+        {
+           n = {};
+           resetstar(n);
+           stars.push(n);
+        }
+
+        // star rendering anim function
+        var rf = function()
+        {
+          G.globalCompositeOperation = "source-over";
+          
+           // clear background
+           G.fillStyle = "#000";
+           G.fillRect(0, 0, width, height);
+           
+          G.globalCompositeOperation = "lighter";
+
+           // mouse position to head towards
+           var cx = (mousex - width / 2) + (width / 2),
+               cy = (mousey - height / 2) + (height / 2);
+           
+           // update all stars
+           var sat = Floor(Z * 500);       // Z range 0.01 -> 0.5
+           if (sat > 100) sat = 100;
+           for (var i=0; i<units; i++)
+           {
+              var n = stars[i],            // the star
+                  xx = n.x / n.z,          // star position
+                  yy = n.y / n.z,
+                  e = (1.0 / n.z + 1) * starWidth;   // size i.e. z
+              
+              if (n.px !== 0)
+              {
+                 // hsl colour from a sine wave
+                 G.strokeStyle = "hsl(" + ((cycle * i) % 360) + "," + sat + "%,60%)";
+                 G.lineWidth = e;
+                 G.beginPath();
+                 G.moveTo(xx + cx, yy + cy);
+                 G.lineTo(n.px + cx, n.py + cy);
+                 G.stroke();
+              }
+              
+              // update star position values with new settings
+              n.px = xx;
+              n.py = yy;
+              n.z -= Z;
+              
+              // reset when star is out of the view field
+              if (n.z < Z || n.px > width || n.py > height)
+              {
+                 // reset star
+                 resetstar(n);
+
+              }
+
+
+           }
+          
+
+           // colour cycle sinewave rotation
+           cycle += 0.01;
+           
+           requestAnimFrame(rf);
+        };
+        requestAnimFrame(rf);
+    </script>
+</body>
+</html>

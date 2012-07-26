@@ -1,0 +1,14 @@
+{
+  "name": "play",
+  "scripts": {
+    "start": "expressApp.js"
+  },
+  "version": "0.0.0-1",
+  "engines": {
+    "node": "0.6.x"
+  },
+  "subdomain": "xplay",
+  "dependencies": {
+    "express": ">= 2.5.9"
+  }
+}

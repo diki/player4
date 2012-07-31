@@ -91,16 +91,12 @@ window.onload=function()
         //     console.log("duraiton",velocity);
         // }
         
-        console.log("gomongo");
         for(var i=0; i<nodeList.length; i++){
-            console.log("prop in", proportion, nodeList[i].x, nodeList[i].y);
             nodeList[i].x=nodeList[i].x*proportion;
             nodeList[i].y=nodeList[i].y*proportion;
 
-            console.log("prop in", proportion, nodeList[i].x, nodeList[i].y);
         }
 
-        console.log("nl", nodeList);
         for(var i=0; i<nodeList.length; i++){
             if(nodeList[i+1]!==undefined){
                 pathLength += vectorDistance(nodeList[i], nodeList[i+1], 1,1);
@@ -182,15 +178,14 @@ window.onload=function()
                           },
 
                           whileplaying: function(){
-                            console.log("peaak", this.peakData, this.eqData);
-                            Z = this.peakData.left/4 + 0.01;
+                            Z = this.peakData.left/2 + 0.01;
 
                             // if(this.peakData.left>this.peakData.right){
                             //     mousex = width/8;
                             // }else {
                             //     mousex = width*7/8;
                             // }
-                            starWidth = 55+100*(1/Z);
+                            //starWidth = 55+100*(1/Z);
                           },
                           volume: 50
                     });

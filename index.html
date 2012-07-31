@@ -156,11 +156,11 @@
     <script type="text/javascript">
 
         var globals = {};
-        canvas.width = window.innerWidth ;
-        canvas.height =  window.innerHeight ;
+        // canvas.width = window.innerWidth ;
+        // canvas.height =  window.innerHeight ;
         // get 2d graphics context and set global alpha
         
-        g.globalAlpha=1;
+        g.globalAlpha=0.25;
         
         // constants and storage for objects that represent star positions
         var warpZ = 12,
@@ -296,8 +296,6 @@
         <script type="text/javascript">
             //var g;  
             // var canvas;
-            canvas.width = window.innerWidth ;
-            canvas.height =  window.innerHeight ;
             //g.save();
 
             var windowHalfX = window.innerWidth / 2;
@@ -315,6 +313,8 @@
             var HALF_PI = Math.PI*0.5;
             
             function init(){
+                canvas.width = window.innerWidth;
+                canvas.height =  window.innerHeight;
                 // canvas = document.getElementById('canvas');         
                 // canvas.width = width;               
                 // canvas.height = height; 
@@ -757,7 +757,7 @@
                 //requestAnimFrame(draw);
             }
             
-            init();
+            //init();
             //requestAnimFrame(rf);
             var currentInterval = setInterval(rf, 1000/60);
 

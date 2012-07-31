@@ -285,7 +285,7 @@
             // colour cycle sinewave rotation
             cycle += 0.01;
            
-            requestAnimFrame(rf);
+            //requestAnimFrame(rf);
 
         };
 
@@ -754,11 +754,18 @@
                 pmouseY = mouseY;       
                 frameCount++;
 
-                requestAnimFrame(draw);
+                //requestAnimFrame(draw);
             }
             
             init();
-            requestAnimFrame(rf);
+            //requestAnimFrame(rf);
+            var currentInterval = setInterval(rf, 1000/60);
+
+            var changeInterval = function(func){
+                clearInterval(currentInterval);
+                currentInterval = setInterval(func, 1000/60);
+            }
+
             function mousePressedEvent(){
             }
             

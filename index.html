@@ -151,32 +151,178 @@
         var width = canvas.width, height = canvas.height, mousex = width/8, mousey = height/8;
 
         var g=canvas.getContext("2d");
+
+        //common methods
+        function clear(){
+            g.fillStyle = "#000";
+            g.fillRect(0,0,width,height);          
+        }
+
+        function windowResize(){
+            g.setTransform(1, 0, 0, 1, 0,0);                
+        }
+        
+        function drawInternal(){                
+            draw();
+            //setTimeout('drawInternal()', drawRate);         
+            pmouseX = mouseX;
+            pmouseY = mouseY;       
+            frameCount++;
+        }
+        
+        function line(x1, y1, x2, y2){
+            g.beginPath();
+            g.moveTo(x1,y1);
+            g.lineTo(x2,y2);
+            g.closePath();
+            g.stroke();
+        }
+        
+        function fillStrokeCircle(x,y,radius){
+            if(radius<=0)
+                radius = 0;
+            g.beginPath();                  
+            g.arc(x, y, radius, 0, TWO_PI, true);
+            g.closePath();
+            g.fill();   
+            g.stroke();
+        }
+        
+        function fillCircle(x, y, radius){
+            if(radius<=0)
+                radius = 0;
+            g.beginPath();                  
+            g.arc(x, y, radius, 0, TWO_PI, true);
+            g.closePath();              
+            g.fill();               
+        }
+        
+        function strokeCircle(x, y, radius){
+            if(radius<=0)
+                radius = 0;
+            g.beginPath();                  
+            g.arc(x,y, radius, 0, TWO_PI, true);
+            g.stroke();                         
+        }
+        
+        function dist(ax, ay, bx, by) {
+            var dx = bx - ax;
+            dy = by - ay;
+            return Math.sqrt(dx * dx + dy * dy + dz * dz);
+        }    
+
+        function addCanvasEventListener(name, fn){
+            canvas.addEventListener(name, fn, false);
+        } 
     </script>
     
     <script type="text/javascript">
 
         var globals = {};
-        // canvas.width = window.innerWidth ;
-        // canvas.height =  window.innerHeight ;
-        // get 2d graphics context and set global alpha
-        
-        g.globalAlpha=0.25;
-        
-        // constants and storage for objects that represent star positions
-        var warpZ = 12,
-        units = 500,
-        stars = [],
-        cycle = 0,
-        Z = 0.025 + (1/25 * 2),
-        //Z= 55+100*1/Z;
-        starWidth = 2;
+
+        var space = (function(result){
+
+            /** private variables **/
+            // constants and storage for objects that represent star positions
+            var warpZ = 12,
+            units = 500,
+            stars = [],
+            cycle = 0,
+            Z = 0.025 + (1/25 * 2),
+            //Z= 55+100*1/Z;
+            starWidth = 2;
+
+
+            var resetstar = function(a)
+            {
+                a.x = (Rnd() * width - (width * 0.5)) * warpZ;
+                a.y = (Rnd() * height - (height * 0.5)) * warpZ;
+                a.z = warpZ;
+                a.px = 0;
+                a.py = 0;
+            }
+
+            
+            result.init = function(){
+                canvas.width = window.innerWidth ;
+                canvas.height =  window.innerHeight ;
+
+                g.globalAlpha=0.25;
+                // initial star setup
+                for (var i=0, n; i<units; i++)
+                {
+                    n = {};
+                    resetstar(n);
+                    stars.push(n);
+                }
+            };
+
+
+            result.drawInternal = function(){
+                //g.globalCompositeOperation = "source-over";
+              
+                clear();
+               
+                //g.globalCompositeOperation = "lighter";
+
+                // mouse position to head towards
+                var cx = (mousex - width / 2) + (width / 2),
+                cy = (mousey - height / 2) + (height / 2);
+               
+                // update all stars
+                var sat = Floor(Z * 500);       // Z range 0.01 -> 0.5
+                if (sat > 100) sat = 100;
+
+                //says it is optimizing canvar performance here but here totally changed behaviour
+                //http://www.html5rocks.com/en/tutorials/canvas/performance/
+                //g.beginPath();
+                for (var i=0; i<units; i++)
+                {
+                    var n = stars[i],            // the star
+                      xx = n.x / n.z,          // star position
+                      yy = n.y / n.z,
+                      e = (1.0 / n.z + 1) * starWidth;   // size i.e. z
+
+
+
+                    if (n.px !== 0)
+                    {
+                        g.beginPath();
+                        // hsl colour from a sine wave
+                        g.strokeStyle = "hsl(" + ((cycle * i) % 360) + "," + sat + "%,60%)";
+                        g.lineWidth = e;
+                     
+                        g.moveTo(xx + cx, yy + cy);
+                        g.lineTo(n.px + cx, n.py + cy);
+                        g.stroke();
+                    }
+
+                    // update star position values with new settings
+                    n.px = xx;
+                    n.py = yy;
+                    n.z -= Z;
+                  
+                    // reset when star is out of the view field
+                    if (n.z < Z || n.px > width || n.py > height)
+                    {
+                    // reset star
+                        resetstar(n);
+
+                    }
+
+                }
+                //g.stroke();
+                // colour cycle sinewave rotation
+                cycle += 0.01;
+
+            }
+
+            return result;
+        })(space || {});
         //extraUnits = 0;
         
         // mouse events
-        function addCanvasEventListener(name, fn)
-        {
-            canvas.addEventListener(name, fn, false);
-        }    
+   
         // addCanvasEventListener("mousemove", function(e) {
         //    mousex = e.clientX;
         //    mousey = e.clientY;
@@ -202,94 +348,7 @@
         //   addCanvasEventListener("DOMMouseScroll", wheel);
         //   addCanvasEventListener("mousewheel", wheel);
 
-        // function to reset a star object
-        function resetstar(a)
-        {
-            a.x = (Rnd() * width - (width * 0.5)) * warpZ;
-            a.y = (Rnd() * height - (height * 0.5)) * warpZ;
-            a.z = warpZ;
-            a.px = 0;
-            a.py = 0;
-        }
-
-        // initial star setup
-        for (var i=0, n; i<units; i++)
-        {
-            n = {};
-            resetstar(n);
-            stars.push(n);
-        }
-
-        // star rendering anim function
-        var rf = function()
-        {
-            //g.globalCompositeOperation = "source-over";
-          
-            // clear background
-            g.fillStyle = "#000";
-            g.fillRect(0, 0, width, height);
-           
-            //g.globalCompositeOperation = "lighter";
-
-            // mouse position to head towards
-            var cx = (mousex - width / 2) + (width / 2),
-            cy = (mousey - height / 2) + (height / 2);
-           
-            // update all stars
-            var sat = Floor(Z * 500);       // Z range 0.01 -> 0.5
-            if (sat > 100) sat = 100;
-
-            //says it is optimizing canvar performance here but here totally changed behaviour
-            //http://www.html5rocks.com/en/tutorials/canvas/performance/
-            //g.beginPath();
-            for (var i=0; i<units; i++)
-            {
-                var n = stars[i],            // the star
-                  xx = n.x / n.z,          // star position
-                  yy = n.y / n.z,
-                  e = (1.0 / n.z + 1) * starWidth;   // size i.e. z
-
-
-
-                if (n.px !== 0)
-                {
-                    g.beginPath();
-                    // hsl colour from a sine wave
-                    g.strokeStyle = "hsl(" + ((cycle * i) % 360) + "," + sat + "%,60%)";
-                    g.lineWidth = e;
-                 
-                    g.moveTo(xx + cx, yy + cy);
-                    g.lineTo(n.px + cx, n.py + cy);
-                    g.stroke();
-                }
-
-                // update star position values with new settings
-                n.px = xx;
-                n.py = yy;
-                n.z -= Z;
-              
-                // reset when star is out of the view field
-                if (n.z < Z || n.px > width || n.py > height)
-                {
-                // reset star
-                    resetstar(n);
-
-                }
-
-
-            }
-
-
-
-            //g.stroke();
-            // colour cycle sinewave rotation
-            cycle += 0.01;
-           
-            //requestAnimFrame(rf);
-
-        };
-
-        //requestAnimFrame(rf);
+        
         </script>
         
         <!-- tunnelers http://ghost-hack.com/post/jsexperiments/tunneler/tunneler.html-->
@@ -311,102 +370,6 @@
             var PI = Math.PI;
             var TWO_PI = 2*Math.PI;
             var HALF_PI = Math.PI*0.5;
-            
-            function init(){
-                canvas.width = window.innerWidth;
-                canvas.height =  window.innerHeight;
-                // canvas = document.getElementById('canvas');         
-                // canvas.width = width;               
-                // canvas.height = height; 
-                                
-                //g = canvas.getContext('2d');        
-                g.setTransform(1, 0, 0, 1, 0,0);                
-                document.addEventListener('mousemove', onDocumentMouseMove, false);                             
-                document.addEventListener('mousedown', onDocumentMouseDown, false);
-                document.addEventListener('mouseup', onDocumentMouseUp, false);             
-                document.addEventListener('keydown', onDocumentKeyDown, false);             
-                setup();
-                //drawInternal();         
-            }
-            
-            function windowResize(){
-//              width = window.innerWidth ;
-//              height = window.innerHeight ;               
-//              canvas.width = width;
-//              canvas.height = height;
-                g.setTransform(1, 0, 0, 1, 0,0);                
-            }
-            
-            function onDocumentMouseMove(event) {
-                mouseX = event.clientX - canvas.offsetLeft;
-                mouseY = event.clientY - canvas.offsetTop;                      
-            }       
-            
-            function onDocumentMouseDown(event) {
-                mousePressed = true;        
-                mousePressedEvent();
-            }               
-            
-            function onDocumentMouseUp(event) {
-                mousePressed = false;           
-            }       
-            
-            function onDocumentKeyDown(event){
-                //setup();
-            }
-            
-            function drawInternal(){                
-                draw();
-                //setTimeout('drawInternal()', drawRate);         
-                pmouseX = mouseX;
-                pmouseY = mouseY;       
-                frameCount++;
-            }
-            
-            function clear(){
-                g.clearRect(0,0,width,height);          
-            }
-            
-            function line(x1, y1, x2, y2){
-                g.beginPath();
-                g.moveTo(x1,y1);
-                g.lineTo(x2,y2);
-                g.closePath();
-                g.stroke();
-            }
-            
-            function fillStrokeCircle(x,y,radius){
-                if(radius<=0)
-                    radius = 0;
-                g.beginPath();                  
-                g.arc(x, y, radius, 0, TWO_PI, true);
-                g.closePath();
-                g.fill();   
-                g.stroke();
-            }
-            
-            function fillCircle(x, y, radius){
-                if(radius<=0)
-                    radius = 0;
-                g.beginPath();                  
-                g.arc(x, y, radius, 0, TWO_PI, true);
-                g.closePath();              
-                g.fill();               
-            }
-            
-            function strokeCircle(x, y, radius){
-                if(radius<=0)
-                    radius = 0;
-                g.beginPath();                  
-                g.arc(x,y, radius, 0, TWO_PI, true);
-                g.stroke();                         
-            }
-            
-            function dist(ax, ay, bx, by) {
-                var dx = bx - ax;
-                dy = by - ay;
-                return Math.sqrt(dx * dx + dy * dy + dz * dz);
-            }       
             
             
             var currentRandom = Math.random;
@@ -661,110 +624,154 @@
                 worms = new Array();
             }
 
-            function draw(){
-                clear();
-                
-                
-                for(var w=0; w<worms.length; w++){
-                    var worm = worms[w];
-                    worm.update();
-                    g.fillStyle = worm.c;
+            var tunneler = {
+
+                init : function(){
+                    canvas.width = window.innerWidth;
+                    canvas.height =  window.innerHeight;
+                    // canvas = document.getElementById('canvas');         
+                    // canvas.width = width;               
+                    // canvas.height = height; 
+                                    
+                    //g = canvas.getContext('2d');        
+                    g.setTransform(1, 0, 0, 1, 0,0);                
+                    document.addEventListener('mousemove', this.onDocumentMouseMove, false);                             
+                    document.addEventListener('mousedown', this.onDocumentMouseDown, false);
+                    document.addEventListener('mouseup', this.onDocumentMouseUp, false);             
+                    document.addEventListener('keydown', this.onDocumentKeyDown, false);             
+                    setup();
+                    //drawInternal();         
+                }, 
+
+                drawInternal: function(){
+                    clear();
                     
-                    g.lineWidth = 2;
-                    g.strokeStyle = '#ffffff';                  
-                    if(worm.segments.length>1){                 
-                        g.beginPath();
-                        g.moveTo(worm.segments[0].leftX1, worm.segments[0].leftY1);                     
-                        for(var i=0; i<worm.segments.length; i++){
-                            var segment = worm.segments[i];
-                            g.lineTo(segment.leftX1,segment.leftY1);
-                        }
-                        g.lineTo(worm.segments[worm.segments.length-1].rightX1, worm.segments[worm.segments.length-1].rightY1);
-                        for(var i=worm.segments.length-1; i>=0; i--){
-                            var segment = worm.segments[i];
-                            g.lineTo(segment.rightX1,segment.rightY1);
-                        }
-                        g.closePath();
-//                      g.stroke();
-                        g.fill();
-                        g.stroke();
+                    for(var w=0; w<worms.length; w++){
+                        var worm = worms[w];
+                        worm.update();
+                        g.fillStyle = worm.c;
+                        
+                        g.lineWidth = 2;
+                        g.strokeStyle = '#ffffff';                  
+                        if(worm.segments.length>1){                 
+                            g.beginPath();
+                            g.moveTo(worm.segments[0].leftX1, worm.segments[0].leftY1);                     
+                            for(var i=0; i<worm.segments.length; i++){
+                                var segment = worm.segments[i];
+                                g.lineTo(segment.leftX1,segment.leftY1);
+                            }
+                            g.lineTo(worm.segments[worm.segments.length-1].rightX1, worm.segments[worm.segments.length-1].rightY1);
+                            for(var i=worm.segments.length-1; i>=0; i--){
+                                var segment = worm.segments[i];
+                                g.lineTo(segment.rightX1,segment.rightY1);
+                            }
+                            g.closePath();
+    //                      g.stroke();
+                            g.fill();
+                            g.stroke();
+                        }       
+                        
+                        g.strokeStyle = '#ffffff';
+                        if(worm.segments.length>=1){
+                            var x = worm.segments[0].x1;
+                            var y = worm.segments[0].y1;    
+                            var thickness = worm.segments[0].thickness;
+                            if(worm.thickness<thickness)
+                                thickness = worm.thickness;
+                            if(thickness<=0)
+                                thickness = 0.000001;                           
+                            g.beginPath();
+                            g.arc(x, y, thickness, worm.segments[0].lAngle, worm.segments[0].rAngle, false);
+                            g.closePath();
+                            //g.fill();
+                            g.stroke();
+                            
+                            var xEnd = worm.segments[worm.segments.length-1].x1;
+                            var yEnd = worm.segments[worm.segments.length-1].y1;
+                            thickness = worm.segments[worm.segments.length-1].thickness;
+                            if(worm.thickness<thickness)
+                                thickness = worm.thickness;                     
+                            if(thickness<=0)
+                                thickness = 0.000001;                       
+                            g.beginPath();
+                            g.arc(xEnd, yEnd, thickness, worm.segments[worm.segments.length-1].lAngle, worm.segments[worm.segments.length-1].rAngle, true);
+                            g.closePath();
+                            //g.fill();
+                            g.stroke();     
+                                                                    
+                            thickness = worm.thickness-0.6; 
+                            if(worm.thickness<thickness)
+                                thickness = worm.thickness;                         
+                            fillCircle(worm.segments[0].x1,worm.segments[0].y1,thickness);    
+                            thickness = worm.segments[worm.segments.length-1].thickness-0.6;                            
+                            if(worm.thickness<thickness)
+                                thickness = worm.thickness;                         
+                            fillCircle(worm.segments[worm.segments.length-1].x1,worm.segments[worm.segments.length-1].y1,thickness);                                
+                            
+                            if(worm.life>0){
+                                g.fillStyle = "#FFFFFF";
+                                fillCircle(worm.segments[0].x1,worm.segments[0].y1,thickness * 0.72);    
+                            }
+                        }                   
                     }       
                     
-                    g.strokeStyle = '#ffffff';
-                    if(worm.segments.length>=1){
-                        var x = worm.segments[0].x1;
-                        var y = worm.segments[0].y1;    
-                        var thickness = worm.segments[0].thickness;
-                        if(worm.thickness<thickness)
-                            thickness = worm.thickness;
-                        if(thickness<=0)
-                            thickness = 0.000001;                           
-                        g.beginPath();
-                        g.arc(x, y, thickness, worm.segments[0].lAngle, worm.segments[0].rAngle, false);
-                        g.closePath();
-                        //g.fill();
-                        g.stroke();
-                        
-                        var xEnd = worm.segments[worm.segments.length-1].x1;
-                        var yEnd = worm.segments[worm.segments.length-1].y1;
-                        thickness = worm.segments[worm.segments.length-1].thickness;
-                        if(worm.thickness<thickness)
-                            thickness = worm.thickness;                     
-                        if(thickness<=0)
-                            thickness = 0.000001;                       
-                        g.beginPath();
-                        g.arc(xEnd, yEnd, thickness, worm.segments[worm.segments.length-1].lAngle, worm.segments[worm.segments.length-1].rAngle, true);
-                        g.closePath();
-                        //g.fill();
-                        g.stroke();     
-                                                                
-                        thickness = worm.thickness-0.6; 
-                        if(worm.thickness<thickness)
-                            thickness = worm.thickness;                         
-                        fillCircle(worm.segments[0].x1,worm.segments[0].y1,thickness);    
-                        thickness = worm.segments[worm.segments.length-1].thickness-0.6;                            
-                        if(worm.thickness<thickness)
-                            thickness = worm.thickness;                         
-                        fillCircle(worm.segments[worm.segments.length-1].x1,worm.segments[worm.segments.length-1].y1,thickness);                                
-                        
-                        if(worm.life>0){
-                            g.fillStyle = "#FFFFFF";
-                            fillCircle(worm.segments[0].x1,worm.segments[0].y1,thickness * 0.72);    
-                        }
-                    }                   
-                }       
-                
-                for(var w=0; w<worms.length; w++){
-                    var worm = worms[w];
-                    if(worm.ooo){
-                        worms.splice(w,1);
-                        w--;
-                    }               
-                }
-                
-                if(frameCount %2 ==0 && mousePressed && worms.length < 50){
-                    var direction = Math.atan2(pmouseY-mouseY, pmouseX-mouseX) + PI;
-                    var newWorm = new Worm(mouseX,mouseY);
-                    worms.push( newWorm );
-                    if(mouseX!=pmouseX && mouseY!=pmouseY)
-                        newWorm.heading = direction;
-                }
-                
-                pmouseX = mouseX;
-                pmouseY = mouseY;       
-                frameCount++;
+                    for(var w=0; w<worms.length; w++){
+                        var worm = worms[w];
+                        if(worm.ooo){
+                            worms.splice(w,1);
+                            w--;
+                        }               
+                    }
+                    
+                    if(frameCount %2 ==0 && mousePressed && worms.length < 50){
+                        var direction = Math.atan2(pmouseY-mouseY, pmouseX-mouseX) + PI;
+                        var newWorm = new Worm(mouseX,mouseY);
+                        worms.push( newWorm );
+                        if(mouseX!=pmouseX && mouseY!=pmouseY)
+                            newWorm.heading = direction;
+                    }
+                    
+                    pmouseX = mouseX;
+                    pmouseY = mouseY;       
+                    frameCount++;
+                },
 
-                //requestAnimFrame(draw);
-            }
+                //events
+                onDocumentMouseMove: function(event) {
+                    mouseX = event.clientX - canvas.offsetLeft;
+                    mouseY = event.clientY - canvas.offsetTop;                      
+                },       
+                
+                onDocumentMouseDown: function(event) {
+                    mousePressed = true;        
+                    mousePressedEvent();
+                },              
+                
+                onDocumentMouseUp: function(event) {
+                    mousePressed = false;           
+                },       
+                
+                onDocumentKeyDown: function (event){
+                    //setup();
+                }
+
+            };
             
             //init();
             //requestAnimFrame(rf);
-            var currentInterval = setInterval(rf, 1000/60);
-
-            var changeInterval = function(func){
-                clearInterval(currentInterval);
-                currentInterval = setInterval(func, 1000/60);
+            
+            var currentInterval = false;
+            function startInterval(obj){
+                obj.init();
+                currentInterval = setInterval(obj.drawInternal, 1000/60);
             }
+
+            var changeInterval = function(obj){
+                clearInterval(currentInterval);
+                startInterval(obj);
+            }
+
+            startInterval(space);
 
             function mousePressedEvent(){
             }

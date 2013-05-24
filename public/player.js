@@ -179,8 +179,9 @@ window.onload=function()
                           },
 
                           whileplaying: function(){
-                            Z = this.peakData.left/2 + 0.01;
-
+                            //console.log(space.Z);
+                            //space.Z = this.peakData.left*2 + 0.01;
+                            //space.starWidth = this.peakData.left*300;
                             // if(this.peakData.left>this.peakData.right){
                             //     mousex = width/8;
                             // }else {
@@ -369,7 +370,7 @@ window.onload=function()
         //x,y,path,id, marginLeft, marginTop, soundUrl
         var t = new $traveler(36,29,nl,1,30,24,"mp3/04. Squirrel And Biscuits.mp3");
         travelers.push(t);
-        
+
         var nl2=[];
         var nt2_1 = new vector(57,47);
         nl2.push(nt2_1);
@@ -465,6 +466,7 @@ window.onload=function()
         var t8 = new $traveler(253,43,nl8,3, 248, 42, "/mp3/Gui Boratto - Like You.mp3");
         travelers.push(t8);
 
+        //left of heart
         var nl9=[];
         var t9 = new $traveler(121,177,nl9,3, 116, 172, "/mp3/Gui Boratto - Like You.mp3");
         travelers.push(t9);
@@ -481,6 +483,7 @@ window.onload=function()
         var t12 = new $traveler(216,120,nl12,3, 211, 115, "/mp3/Gui Boratto - Like You.mp3");
         travelers.push(t12);
 
+        //north of heart
         var nl13=[];
         var t13 = new $traveler(330,86,nl13,3, 325, 81, "/mp3/Gui Boratto - Like You.mp3");
         travelers.push(t13);
@@ -503,7 +506,9 @@ window.onload=function()
 
         var nl18=[];
         var t18 = new $traveler(418,76,nl18,3, 413, 71, "/mp3/Gui Boratto - Like You.mp3");
-        travelers.push(t18);                
+        travelers.push(t18);
+
+
         console.log("travelers: ", travelers);
         
     //  bind click events to mask,
